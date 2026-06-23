@@ -1571,29 +1571,45 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NpcInteractable
   npcName: Ash
-  dialogueNode:
-  - id: 0
-    nextId: 1
-    text: Algo horrivel aconteceu na nossa cidade.
-    dialogueOption: []
-  - id: 1
-    nextId: 0
-    text: "Voc\xEA poderia nos ajudar?"
-    dialogueOption:
-    - optionText: Claro!
-      nextId: 2
-    - optionText: Estou ocupado!
-      nextId: 3
-  - id: 2
-    nextId: 10
-    text: Obrigado!
-    dialogueOption: []
-  - id: 3
-    nextId: 10
-    text: Entendo, na proxima quem sabe.
-    dialogueOption: []
   popUpFeedbackMsg: '"Press E to talk"'
-  interactionPointTransform: {fileID: 272633865}
+  session:
+    conversationId: conversation_ash
+    startNodeId: intro_ash
+    nodes:
+    - id: intro_ash
+      nextId: offer_quest
+      text: "Ol\xE1 seja bem vindo!"
+      dialogueOption: []
+    - id: offer_quest
+      nextId: 
+      text: "Voc\xEA poderia nos ajudar?"
+      dialogueOption:
+      - optionText: Claro!
+        nextId: accepted_quest
+      - optionText: "Agora n\xE3o."
+        nextId: rejected_quest
+    - id: accepted_quest
+      nextId: repeate_accepted
+      text: Obrigado!
+      dialogueOption: []
+    - id: rejected_quest
+      nextId: repeate_rejected
+      text: Tudo bem, volte quando quiser ajudar.
+      dialogueOption: []
+    repeatNodes:
+    - id: repeate_accepted
+      nextId: 
+      text: Assim que terminar, volte para falar comigo.
+      dialogueOption: []
+    - id: repeate_rejected
+      nextId: 
+      text: "Est\xE1 pronto para come\xE7ar?"
+      dialogueOption:
+      - optionText: Claro!
+        nextId: accepted_quest
+      - optionText: "Ainda n\xE3o."
+        nextId: rejected_quest
+    useRepeatWhenCompleted: 1
 --- !u!1 &1604522894
 GameObject:
   m_ObjectHideFlags: 0

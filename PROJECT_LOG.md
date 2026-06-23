@@ -1,6 +1,6 @@
 # RPG2D - Diario do Projeto
 
-Ultima atualizacao: 2026-06-20
+Ultima atualizacao: 2026-06-22
 
 ## Acordo de trabalho
 
@@ -258,6 +258,8 @@ Desafios pedagogicos:
 - Explicacao e boas praticas sobre `Dictionary` foram discutidas: limpar com `Clear()`, detectar duplicatas,
   e usar `TryGetValue` para consultas seguras. Recomenda-se `validateId.Clear()` em `OnDialogueEnded()`.
 
+- Conceitos importantes, como callbacks, foram documentados no log para servir de referencia futura.
+
 ## Acoes recomendadas/pendentes
 
 - Criar prefab `OptionButton` com `Button` + `TMP_Text` e atribuir em `DialoguePanelUI` (`optionsContainer`/`optionButtonPrefab`).
@@ -268,4 +270,5 @@ Desafios pedagogicos:
 ## Commits recentes
 
 - `docs`: atualizou `PROJECT_LOG.md` com resumo das alteracoes de 2026-06-21
+- `docs`: atualizou `PROJECT_LOG.md` com explicacao de callbacks e compromisso de documentar conceitos importantes (2026-06-22)
 
