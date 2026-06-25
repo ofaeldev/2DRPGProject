@@ -27,7 +27,7 @@ public class NpcInteractable : MonoBehaviour, IInteraction
     #if UNITY_EDITOR
     private void OnValidate()
     {
-        var nodes = session != null ? session.nodes : null;
+        var nodes = session != null ? session.firstTimeNodes : null;
         if (nodes == null || nodes.Length == 0)
             return;
 

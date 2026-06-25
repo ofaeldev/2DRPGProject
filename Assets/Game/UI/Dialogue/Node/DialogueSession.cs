@@ -10,11 +10,6 @@ public class DialogueSession
     public string startNodeId;
 
     // Main dialogue nodes for the first time path
-    public DialogueNode[] nodes;
-
-    // Optional alternative nodes for repeat interactions
-    public DialogueNode[] repeatNodes;
-
-    // If true and repeatNodes is provided, DialogueController may show repeatNodes when conversation already completed
-    public bool useRepeatWhenCompleted = true;
+    public DialogueNode[] firstTimeNodes;
+    public DialogueBranch[] worldStateBranches;
 }

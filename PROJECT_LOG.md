@@ -1,6 +1,6 @@
 # RPG2D - Diario do Projeto
 
-Ultima atualizacao: 2026-06-22
+Ultima atualizacao: 2026-06-24
 
 ## Acordo de trabalho
 
@@ -260,15 +260,48 @@ Desafios pedagogicos:
 
 - Conceitos importantes, como callbacks, foram documentados no log para servir de referencia futura.
 
+### 2026-06-24 - Dialogo ramificado por estado do mundo validado
+
+- Consolidamos `DialogueSession` como pacote de conversa de um NPC:
+  - `firstTimeNodes` representa o caminho padrao/inicial.
+  - `worldStateBranches` representa variacoes condicionadas por flags do mundo.
+
+- Criamos `DialogueBranch` para ligar uma condicao de mundo a uma lista de falas:
+  - `requiredFlag` define qual flag precisa existir no `WorldStateService`.
+  - `nodes` define qual fluxo de dialogo sera usado quando a flag estiver ativa.
+
+- Refatoramos `DialogueController` para escolher os nodes em um metodo dedicado:
+  - Comeca sempre com `firstTimeNodes`.
+  - Ignora branches incompletas ou invalidas.
+  - Usa a primeira branch valida cuja flag exista no `WorldStateService`.
+  - Mantem fallback seguro para o dialogo inicial.
+
+- Validamos em Play Mode o primeiro dialogo completo:
+  - Ash inicia uma conversa com opcoes.
+  - A opcao de aceitar ajuda salva a flag `accepted_quest`.
+  - Ao falar novamente com Ash, a fala muda para a branch condicionada por `accepted_quest`.
+  - Um segundo NPC (`guard_npc`) foi configurado conceitualmente para reagir a mesma flag:
+    antes de falar com Ash, tem uma fala simples; depois de aceitar a ajuda, muda sua fala.
+
+- Aprendizado reforcado:
+  - Diferenca entre configuracao (`DialogueSession`), variacao condicional (`DialogueBranch`) e estado em execucao (`currentNodes`/`currentNode`).
+  - Uso de fallback para dados serializados incompletos.
+  - `continue` significa ignorar a branch atual e testar a proxima; `break` significa encerrar a busca porque uma branch vencedora foi encontrada.
+  - Abstracoes devem ser validadas por casos reais antes de ganhar mais complexidade.
+
+- Decisao de arquitetura:
+  - O dialogo ramificado minimo esta satisfatorio para a fase atual.
+  - Nao vamos adicionar validadores avancados, ScriptableObjects, prioridade complexa ou sistema de persistencia agora.
+  - Proximo sistema sugerido: quest simples, conectando dialogo, flags de mundo e conclusao de objetivo.
+
 ## Acoes recomendadas/pendentes
 
-- Criar prefab `OptionButton` com `Button` + `TMP_Text` e atribuir em `DialoguePanelUI` (`optionsContainer`/`optionButtonPrefab`).
-- Testar um dialogo com 3+ opcoes e validar que `ChooseOption(int)` recebe os indices corretos.
-- Adicionar `OnValidate()` ou validacao em editor para detectar `id` duplicados e `nextId` invalidos antes do runtime.
-- Adicionar `validateId.Clear()` em `OnDialogueEnded()` e avisos sobre `duplicate id` ao popular o dicionario.
+- Criar validacao tambem para os `nodes` dentro de `DialogueBranch`.
+- Revisar `DialogueOption` para decidir se `flagOptions` deve continuar como enum ou virar string configuravel.
+- Corrigir configuracoes pontuais de `startNodeId` quando o id nao corresponder a nenhum node.
+- Iniciar um sistema de quest simples, mantendo o mesmo modelo de aprendizado: objetivo pequeno, verificavel e integrado ao estado do mundo.
 
 ## Commits recentes
 
 - `docs`: atualizou `PROJECT_LOG.md` com resumo das alteracoes de 2026-06-21
 - `docs`: atualizou `PROJECT_LOG.md` com explicacao de callbacks e compromisso de documentar conceitos importantes (2026-06-22)
-

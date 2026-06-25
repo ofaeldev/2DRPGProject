@@ -12,6 +12,7 @@ public class DialogueController : MonoBehaviour
 
     private Dictionary<string, DialogueNode> validateId = new Dictionary<string, DialogueNode>();
 
+    #region Unity Methods
     private void Awake()
     {
         dialoguePanelUI = GetComponent<DialoguePanelUI>();
@@ -20,7 +21,6 @@ public class DialogueController : MonoBehaviour
 
     private void OnEnable()
     {
-        DialogueService.DialogueStarted += OnDialogueStarted;
         DialogueService.DialogueStartedSession += OnDialogueStartedSession;
         DialogueService.DialogueAdvanced += OnDialogueAdvanced;
         DialogueService.DialogueEnded += OnDialogueEnded;
@@ -28,45 +28,18 @@ public class DialogueController : MonoBehaviour
 
     private void OnDisable()
     {
-        DialogueService.DialogueStarted -= OnDialogueStarted;
         DialogueService.DialogueStartedSession -= OnDialogueStartedSession;
         DialogueService.DialogueAdvanced -= OnDialogueAdvanced;
         DialogueService.DialogueEnded -= OnDialogueEnded;
     }
-
-    // Legacy start (npcName + nodes)
-    private void OnDialogueStarted(string npcName, DialogueNode[] dialogueLines)
-    {
-        if(dialogueLines == null)
-            return;
-
-        if (string.IsNullOrEmpty(npcName))
-        {
-            Debug.LogWarning($"Npc name in dialogue is null or empty");
-            return;
-        }
-            
-
-        StartDialogueInternal(npcName, dialogueLines, null, null);
-    }
-
+    #endregion
     // New start (npcName + DialogueSession)
     private void OnDialogueStartedSession(string npcName, DialogueSession session)
     {
         if (session == null)
             return;
 
-        DialogueNode[] nodesToUse = session.nodes;
-
-        if (!string.IsNullOrWhiteSpace(session.conversationId) &&
-            session.useRepeatWhenCompleted &&
-            WorldStateService.HasConversationCompleted(session.conversationId) &&
-            session.repeatNodes != null && session.repeatNodes.Length > 0)
-        {            
-            nodesToUse = session.repeatNodes;
-        }
-
-        StartDialogueInternal(npcName, nodesToUse, session.conversationId, session.startNodeId);
+        StartDialogueInternal(npcName, ChooseNodes(session), session.conversationId, session.startNodeId);
     }
 
     private void StartDialogueInternal(string npcName, DialogueNode[] dialogueLines, string conversationId, string startNodeId)
@@ -115,6 +88,8 @@ public class DialogueController : MonoBehaviour
 
         GameplayStateService.Lock(GameplayLockReason.Dialogue);
 
+        WorldStateService.SetFlag(currentNode.flagConversation);
+        
         dialoguePanelUI.ShowDialogue(currentNpcName, currentNode.text);
         isDialogueActive = true;
     }
@@ -167,6 +142,7 @@ public class DialogueController : MonoBehaviour
         }
     }
 
+    #region Helpers
     private DialogueNode FindNodeById(string id)
     {
         if (string.IsNullOrWhiteSpace(id))
@@ -191,6 +167,8 @@ public class DialogueController : MonoBehaviour
 
         DialogueOption choose = currentNode.dialogueOption[optionIndex];
 
+        WorldStateService.SetFlag(choose.flagOptions.ToString());
+
         if (string.IsNullOrWhiteSpace(choose.nextId))
         {
             DialogueService.EndedDialogue();
@@ -210,4 +188,44 @@ public class DialogueController : MonoBehaviour
             DialogueService.EndedDialogue();
         }
     }
+
+    private bool HasNodes(DialogueNode[] nodes)
+    {
+        return nodes != null && nodes.Length > 0;
+    }
+
+    private DialogueNode[] ChooseNodes(DialogueSession session)
+    {
+        if(session == null)
+            return null;
+        
+        DialogueNode[] nodesToUse = session.firstTimeNodes;
+
+        if(session.worldStateBranches == null)
+            return nodesToUse;
+
+        for (int i = 0; i < session.worldStateBranches.Length; i++)
+        {
+            
+            DialogueBranch branch = session.worldStateBranches[i];
+
+            if(branch == null)
+                continue;
+            
+            if(string.IsNullOrEmpty(branch.requiredFlag))
+                continue;
+            
+            if(!HasNodes(branch.nodes))
+                continue;
+            
+            if(!WorldStateService.HasFlag(branch.requiredFlag))
+                continue;
+                
+            nodesToUse = branch.nodes;
+            break;
+        }
+
+        return nodesToUse;
+    }
+#endregion
 }
