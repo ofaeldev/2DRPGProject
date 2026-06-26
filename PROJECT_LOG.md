@@ -1,6 +1,6 @@
 # RPG2D - Diario do Projeto
 
-Ultima atualizacao: 2026-06-24
+Ultima atualizacao: 2026-06-26
 
 ## Acordo de trabalho
 
@@ -294,12 +294,48 @@ Desafios pedagogicos:
   - Nao vamos adicionar validadores avancados, ScriptableObjects, prioridade complexa ou sistema de persistencia agora.
   - Proximo sistema sugerido: quest simples, conectando dialogo, flags de mundo e conclusao de objetivo.
 
+### 2026-06-26 - Quest simples e requisito de mundo conectados
+
+- Criamos a primeira versao do sistema de quest:
+  - `QuestService` guarda o estado runtime das quests (`NotStarted`, `Active`, `Completed`).
+  - `QuestDefinition` guarda dados fixos de apresentacao (`questId`, `title`, `description`).
+  - `QuestDatabase` resolve `questId` para dados legiveis de UI.
+  - `QuestController` observa eventos de quest, consulta o database e aciona `QuestPanelUI`.
+  - `QuestPanelUI` mostra feedback temporario usando coroutine.
+
+- Integramos dialogo e quest:
+  - `DialogueOption` pode iniciar ou completar uma quest.
+  - O fluxo Ash -> Guard -> Gate foi configurado como primeiro caso real:
+    Ash inicia `help_south_gate`, Guard completa a quest, e o Gate usa requisito de mundo para liberar.
+
+- Criamos `WorldRequirement` como condicao reutilizavel:
+  - Pode exigir flag de mundo.
+  - Pode exigir quest ativa.
+  - Pode exigir quest completa.
+  - Campos preenchidos funcionam como condicoes cumulativas: todos precisam passar.
+
+- Criamos `GateInteractable` como primeiro interativo condicionado por estado:
+  - Se o requisito passa, o gate abre/desativa e mostra feedback de sucesso.
+  - Se o requisito falha, mostra feedback de bloqueio.
+
+- Aprendizado reforcado:
+  - Separar identificadores tecnicos (`help_south_gate`) de nomes de UI (`Help South Gate`).
+  - Diferenciar estado runtime (`QuestService`) de dados fixos (`QuestDefinition`).
+  - Entender regras AND em requisitos: preencher `requiredActiveQuest` e `requiredCompletedQuest` para a mesma quest exige dois estados impossiveis ao mesmo tempo.
+  - Usar `return` para encerrar fluxos de sucesso e evitar que mensagens de bloqueio rodem logo depois.
+
+- Decisao de arquitetura:
+  - O sistema esta satisfatorio para a fase atual como primeiro elo entre dialogo, quest e mundo.
+  - Vamos evitar expandir para journal completo, save/load, rewards ou ScriptableObjects ate termos mais casos reais.
+
 ## Acoes recomendadas/pendentes
 
 - Criar validacao tambem para os `nodes` dentro de `DialogueBranch`.
 - Revisar `DialogueOption` para decidir se `flagOptions` deve continuar como enum ou virar string configuravel.
 - Corrigir configuracoes pontuais de `startNodeId` quando o id nao corresponder a nenhum node.
-- Iniciar um sistema de quest simples, mantendo o mesmo modelo de aprendizado: objetivo pequeno, verificavel e integrado ao estado do mundo.
+- Polir `QuestDatabase.GetQuestTitle()` para ignorar slots nulos em vez de encerrar a busca.
+- Melhorar `GateInteractable.GetPopUpText()` para mostrar texto contextual em vez de vazio.
+- Avaliar depois se `WorldRequirement` deve virar um service separado quando mais interativos usarem a mesma logica.
 
 ## Commits recentes
 

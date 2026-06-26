@@ -3,11 +3,11 @@ using UnityEngine;
 
 public class DialogueController : MonoBehaviour
 {
+    private DialoguePanelUI dialoguePanelUI;
     private string currentNpcName;
     private DialogueNode[] currentNodes;
     private DialogueNode currentNode;
     private bool isDialogueActive;
-    private DialoguePanelUI dialoguePanelUI;
     private string currentConversationId;
 
     private Dictionary<string, DialogueNode> validateId = new Dictionary<string, DialogueNode>();
@@ -167,7 +167,17 @@ public class DialogueController : MonoBehaviour
 
         DialogueOption choose = currentNode.dialogueOption[optionIndex];
 
-        WorldStateService.SetFlag(choose.flagOptions.ToString());
+        if(choose == null)
+            return;
+
+        if(!string.IsNullOrWhiteSpace(choose.flagOptions))
+            WorldStateService.SetFlag(choose.flagOptions);
+        
+        if(!string.IsNullOrEmpty(choose.questToStart))
+            QuestService.StartQuest(choose.questToStart);
+
+        if(!string.IsNullOrEmpty(choose.questToComplete))
+            QuestService.CompleteQuest(choose.questToComplete);
 
         if (string.IsNullOrWhiteSpace(choose.nextId))
         {
