@@ -328,6 +328,36 @@ Desafios pedagogicos:
   - O sistema esta satisfatorio para a fase atual como primeiro elo entre dialogo, quest e mundo.
   - Vamos evitar expandir para journal completo, save/load, rewards ou ScriptableObjects ate termos mais casos reais.
 
+### 2026-06-26 - Organizacao profissional de pastas
+
+- Reorganizamos `Assets/Game` por tipo de asset e responsabilidade:
+  - `Scripts/` concentra codigo C# por dominio (`Core`, `Player`, `UI`, `World`).
+  - `Art/` concentra sprites e imagens.
+  - `Animations/` concentra animacoes e controllers.
+  - `Prefabs/` concentra prefabs por categoria.
+  - `Settings/` concentra assets de configuracao, como Input Actions.
+  - `Tilemaps/` concentra tilemaps do mundo.
+
+- Objetivo da reorganizacao:
+  - Reduzir mistura entre codigo, arte, prefabs e configuracoes.
+  - Facilitar a leitura profissional do projeto.
+  - Preparar o projeto para novos sistemas sem crescer em pastas soltas.
+
+### 2026-06-26 - Inventario minimo iniciado
+
+- Criamos a primeira estrutura de inventario:
+  - `ItemDefinition` guarda dados fixos do item (`itemId`, nome, descricao, quantidade).
+  - `InventoryService` guarda o estado runtime dos itens em um dicionario.
+  - `ItemPickupInteractable` usa `IInteraction` para permitir coleta de item no mundo.
+
+- Primeiro caso real configurado:
+  - Um item `key_gate_south` foi adicionado na cena como interativo coletavel.
+
+- Aprendizado reforcado:
+  - `IInteraction` continua sendo o contrato correto para NPCs, gates e pickups.
+  - Inventario deve separar dados fixos do item de estado runtime do jogador.
+  - O dicionario `itemId -> quantidade` e uma boa base, mas precisa tratar soma e remocao parcial corretamente.
+
 ## Acoes recomendadas/pendentes
 
 - Criar validacao tambem para os `nodes` dentro de `DialogueBranch`.
@@ -336,6 +366,10 @@ Desafios pedagogicos:
 - Polir `QuestDatabase.GetQuestTitle()` para ignorar slots nulos em vez de encerrar a busca.
 - Melhorar `GateInteractable.GetPopUpText()` para mostrar texto contextual em vez de vazio.
 - Avaliar depois se `WorldRequirement` deve virar um service separado quando mais interativos usarem a mesma logica.
+- Polir `InventoryService.AddItem()` para somar quantidade quando o item ja existir.
+- Polir `InventoryService.RemoveItem()` para remover parcialmente e apagar o item apenas quando chegar a zero.
+- Fazer `InventoryService.GetItemAmount()` retornar `int`.
+- Proteger `ItemPickupInteractable` contra `ItemDefinition` nulo ou quantidade invalida.
 
 ## Commits recentes
 
