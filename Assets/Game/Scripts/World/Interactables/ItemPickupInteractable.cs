@@ -4,11 +4,22 @@ public class ItemPickupInteractable : MonoBehaviour, IInteraction
 {
     [SerializeField] private GameObject interactionPointTransform;
     [SerializeField] private string feedbackPopup;
-    public ItemDefinition itemDefinition;
+    [SerializeField] private string feedbackPickup;
+    [SerializeField] private string itemId;
+
+    [Min(1)]
+    [SerializeField] private int amount;
+
     public void Execute()
     {
-        InventoryService.AddItem(itemDefinition.itemId, itemDefinition.amount);
-        this.gameObject.SetActive(false);
+        if (string.IsNullOrEmpty(itemId) || amount <= 0)
+            return;
+
+        if (!InventoryService.TryAddItem(itemId, amount))
+            return;
+
+        FeedbackService.StartFeedback(feedbackPickup);
+        gameObject.SetActive(false);
     }
 
     public string GetPopUpText()
@@ -18,6 +29,6 @@ public class ItemPickupInteractable : MonoBehaviour, IInteraction
 
     public Transform InteractionPoint()
     {
-        return this.interactionPointTransform != null ? this.interactionPointTransform.transform : this.transform;
+        return interactionPointTransform != null ? interactionPointTransform.transform : transform;
     }
 }

@@ -1,6 +1,6 @@
 # RPG2D - Diario do Projeto
 
-Ultima atualizacao: 2026-06-26
+Ultima atualizacao: 2026-06-30
 
 ## Acordo de trabalho
 
@@ -186,6 +186,16 @@ Desafios pedagogicos:
 - Nao misturar arquivos gerados ou mudancas acidentais sem revisar sua necessidade.
 
 ## Diario
+
+### 2026-06-30 - Polimento do sistema de inventario
+
+- Refinei a camada de inventario para reduzir riscos de erro e tornar a experiencia mais resiliente.
+- `InventoryService` passou a oferecer helpers de adicao e remocao com retorno de sucesso, evitando operacoes invalidas silenciosas.
+- `InventoryPanelUI` e `InventoryItemUI` agora tratam referencias ausentes com logs claros e evitam NullReference durante a atualizacao da UI.
+- `PlayerInventory` protege a abertura do painel de inventario quando a referencia da UI nao foi configurada corretamente.
+- `ItemPickupInteractable` agora so consome o item e desativa o objeto quando o pickup realmente foi registrado no inventario.
+- Direcao recomendada para o proximo passo: conectar o inventario a icones, slots e persistencia de save/load para evoluir de uma prototipo funcional para um sistema de gameplay mais completo.
+- Ainda falta consolidar testes automatizados e um fluxo de salvamento do estado do inventario para evitar perda de progresso.
 
 ### 2026-06-10 - Inicio do acompanhamento
 

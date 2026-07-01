@@ -1,61 +1,89 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 public static class InventoryService
 {
-    public static event Action<string, int> PickupItemOnInventory;
-    public static event Action<string,int> RemoveItemOnInventory;
-    public static Dictionary<string, int> inventoryItem = new Dictionary<string, int>();
+    public static event Action<string, int> ItemAdded;
+    public static event Action<string, int> ItemRemoved;
+    private static readonly Dictionary<string, int> inventoryItems = new Dictionary<string, int>();
 
     public static void AddItem(string itemId, int amount)
     {
-        if(string.IsNullOrEmpty(itemId) || amount == 0)
-            return;
-        
-        inventoryItem[itemId] = amount;        
-        
-        PickupItemOnInventory?.Invoke(itemId, amount);
+        TryAddItem(itemId, amount);
+    }
+
+    public static bool TryAddItem(string itemId, int amount)
+    {
+        if (string.IsNullOrEmpty(itemId) || amount <= 0)
+            return false;
+
+        if (inventoryItems.ContainsKey(itemId))
+        {
+            inventoryItems[itemId] += amount;
+        }
+        else
+        {
+            inventoryItems[itemId] = amount;
+        }
+
+        ItemAdded?.Invoke(itemId, amount);
+        return true;
     }
 
     public static void RemoveItem(string itemId, int amount)
     {
-        if(string.IsNullOrEmpty(itemId) || amount == 0)
-            return;
-        
-        if(inventoryItem.Count == 0)
-            return;
+        TryRemoveItem(itemId, amount);
+    }
 
-        inventoryItem.Remove(itemId);
+    public static bool TryRemoveItem(string itemId, int amount)
+    {
+        if (string.IsNullOrEmpty(itemId) || amount <= 0)
+            return false;
 
-        RemoveItemOnInventory?.Invoke(itemId, amount);
+        if (!inventoryItems.TryGetValue(itemId, out int currentAmount))
+            return false;
+
+        if (currentAmount < amount)
+            return false;
+
+        int newAmount = currentAmount - amount;
+
+        if (newAmount <= 0)
+        {
+            inventoryItems.Remove(itemId);
+        }
+        else
+        {
+            inventoryItems[itemId] = newAmount;
+        }
+
+        ItemRemoved?.Invoke(itemId, amount);
+        return true;
     }
 
     public static bool HasItem(string itemId)
     {
-        if(string.IsNullOrEmpty(itemId))
-            return false;
-        
-        if(inventoryItem.Count == 0)
-            return false;
-        
-        if(!inventoryItem.ContainsKey(itemId))
-            return false;
-        
-        return true;
+        return !string.IsNullOrEmpty(itemId) && inventoryItems.ContainsKey(itemId);
     }
 
-    public static void GetItemAmount(string itemId)
+    public static int GetItemAmount(string itemId)
     {
-        if(string.IsNullOrEmpty(itemId))
-            return;
-        
-        if(inventoryItem.Count == 0)
-            return;
+        if (string.IsNullOrEmpty(itemId))
+            return 0;
 
-        if (inventoryItem.ContainsKey(itemId))
-        {
-            
-        }
+        if (inventoryItems.TryGetValue(itemId, out int amount))
+            return amount;
+
+        return 0;
+    }
+
+    public static IReadOnlyDictionary<string, int> GetAllItems()
+    {
+        return new Dictionary<string, int>(inventoryItems);
+    }
+
+    public static void ClearAll()
+    {
+        inventoryItems.Clear();
     }
 }

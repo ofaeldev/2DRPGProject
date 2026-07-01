@@ -4,26 +4,31 @@ using UnityEngine.InputSystem;
 [RequireComponent(typeof(PlayerInputSource))]
 [RequireComponent(typeof(PlayerMovement))]
 [RequireComponent(typeof(PlayerInteraction))]
+[RequireComponent(typeof(PlayerInventory))]
 public class PlayerController : MonoBehaviour
 {
     private PlayerInputReader playerInputReader;
     private PlayerInputSource playerInputSource;
     private PlayerMovement playerMovement;
+    private PlayerInventory playerInventory;
     private PlayerInteraction playerInteraction;
     [SerializeField] private PlayerAnimator playerAnimator;
     [SerializeField] private InputActionReference moveActionReference;
     [SerializeField] private InputActionReference interactionActionReference;
+    [SerializeField] private InputActionReference inventoryActionReference;
 
     private void Awake()
     {
         playerInputSource = GetComponent<PlayerInputSource>();
         playerMovement = GetComponent<PlayerMovement>();
         playerInteraction = GetComponent<PlayerInteraction>();
+        playerInventory = GetComponent<PlayerInventory>();
 
         playerInputReader = new PlayerInputReader();
 
         playerInteraction.Initialize(playerInputReader);
-        playerInputSource.Initialize(playerInputReader, moveActionReference, interactionActionReference);   
+        playerInventory.Initialize(playerInputReader);
+        playerInputSource.Initialize(playerInputReader, moveActionReference, interactionActionReference, inventoryActionReference);   
         playerMovement.Initialize(playerInputReader);
     }
 

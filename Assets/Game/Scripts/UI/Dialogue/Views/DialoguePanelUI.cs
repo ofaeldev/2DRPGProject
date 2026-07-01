@@ -21,6 +21,8 @@ public class DialoguePanelUI : MonoBehaviour
         this.npcName.text = npcName;
         this.dialogueLine.text = lines;
         canvasGroup.alpha = 1;
+        canvasGroup.blocksRaycasts = true;
+        canvasGroup.interactable = true;
 
         HideOptions();
     }
@@ -28,6 +30,8 @@ public class DialoguePanelUI : MonoBehaviour
     public void HideDialogue()
     {
         canvasGroup.alpha = 0;
+        canvasGroup.blocksRaycasts = false;
+        canvasGroup.interactable = false;
         dialogueLine.text = string.Empty;
         HideOptions();
     }

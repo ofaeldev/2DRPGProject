@@ -7,13 +7,18 @@ public class PlayerInputSource : MonoBehaviour
     private PlayerInputReader playerInputReader;
     private InputAction moveAction;
     private InputAction interactionAction;
+    private InputAction inventoryAction;
     private bool isConnected;
 
-    public void Initialize(PlayerInputReader reader, InputActionReference moveActionReference, InputActionReference actionReference)
+    public void Initialize(PlayerInputReader reader, 
+    InputActionReference moveActionReference, 
+    InputActionReference actionReference,
+    InputActionReference inventoryReference)
     {
         playerInputReader = reader;
         moveAction = moveActionReference.action;
         interactionAction = actionReference.action;
+        inventoryAction = inventoryReference.action;
 
         if(isActiveAndEnabled)
         {
@@ -33,15 +38,20 @@ public class PlayerInputSource : MonoBehaviour
     {
         if(isConnected) return;
 
-        if(playerInputReader == null || moveAction == null || interactionAction == null)
+        if(playerInputReader == null 
+        || moveAction == null 
+        || interactionAction == null 
+        || inventoryAction == null)
             return;
 
         moveAction.performed += OnMove;
         moveAction.canceled += OnMove;
 
         interactionAction.performed += OnInteraction;
+        inventoryAction.performed += OnInventory;
 
         interactionAction.Enable();
+        inventoryAction.Enable();
         moveAction.Enable();
 
         isConnected = true;
@@ -56,7 +66,9 @@ public class PlayerInputSource : MonoBehaviour
         moveAction.canceled -= OnMove;
 
         interactionAction.performed -= OnInteraction;
+        inventoryAction.performed -= OnInventory;
 
+        inventoryAction.Disable();
         interactionAction.Disable();
         moveAction.Disable();
 
@@ -74,5 +86,10 @@ public class PlayerInputSource : MonoBehaviour
     private void OnInteraction(InputAction.CallbackContext context)
     {
         playerInputReader.RequestInteraction();        
+    }    
+
+    private void OnInventory(InputAction.CallbackContext context)
+    {
+        playerInputReader.RequestInventory();
     }
 }

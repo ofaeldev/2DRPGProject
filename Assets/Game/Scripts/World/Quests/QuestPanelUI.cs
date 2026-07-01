@@ -7,8 +7,12 @@ public class QuestPanelUI : MonoBehaviour
     public TMP_Text titleText;
     public TMP_Text statusText;
     public CanvasGroup canvasGroup;
-    private Coroutine hideRoutine;  
+    private Coroutine hideRoutine;
 
+    void Start()
+    {
+        HideQuestPanel();
+    }
     public void ShowQuestStarted(string title, string status)
     {
         titleText.text = $"Start quest {title}";
