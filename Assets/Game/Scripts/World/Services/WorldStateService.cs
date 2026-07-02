@@ -1,8 +1,16 @@
 using System.Collections.Generic;
 using UnityEngine;
+using System;
 
 public static class WorldStateService
 {
+    public static event Action<string> FlagSet;
+    public static event Action<string> FlagCleared;
+    public static event Action<string, int> StageSet;
+    public static event Action<string> StageRemoved;
+    public static event Action<string> ConversationMarkedComplete;
+    public static event Action WorldStateLoaded;
+
     private static Dictionary<string, bool> worldFlags = new Dictionary<string, bool>(); 
     private static Dictionary<string, int> stages = new Dictionary<string, int>();
     private static HashSet<string> conversationComplete = new HashSet<string>();
@@ -27,7 +35,9 @@ public static class WorldStateService
         if(worldFlags == null)
             return;
 
-        worldFlags[flagId] = true;       
+        worldFlags[flagId] = true;
+
+        FlagSet?.Invoke(flagId);       
 
     }
 
@@ -43,6 +53,8 @@ public static class WorldStateService
             return;
 
         worldFlags.Remove(flagId);
+        FlagCleared?.Invoke(flagId);
+        
     }
     #endregion
 
@@ -74,6 +86,8 @@ public static class WorldStateService
             return;
         
         stages[stageId] = stageValue;
+        StageSet?.Invoke(stageId, stageValue);
+        
     }
 
     public static bool HasStage(string stageId)
@@ -102,6 +116,7 @@ public static class WorldStateService
             return;
 
         stages.Remove(stageId);           
+        StageRemoved?.Invoke(stageId);
         
     }
 
@@ -132,6 +147,7 @@ public static class WorldStateService
             return;
 
         conversationComplete.Add(conversationId);
+        ConversationMarkedComplete?.Invoke(conversationId);
         
     }
 
@@ -171,4 +187,70 @@ public static class WorldStateService
             Debug.LogWarning($"Clear all historic flags {worldFlags.Count}, stages {stages.Count}, conversation {conversationComplete.Count}");        
     }
     #endregion
+
+    #region Save/Load Helpers
+    public static WorldStateSaveData GetAllData()
+    {
+        WorldStateSaveData data = new WorldStateSaveData();
+
+        // Salva flags
+        foreach (var flagId in worldFlags.Keys)
+        {
+            data.flags.Add(new FlagSaveData { flagId = flagId });
+        }
+
+        // Salva stages
+        foreach (var stage in stages)
+        {
+            data.stages.Add(new StageSaveData { stageId = stage.Key, value = stage.Value });
+        }
+
+        // Salva conversas completadas
+        foreach (var conversationId in conversationComplete)
+        {
+            data.conversationsCompleted.Add(conversationId);
+        }
+
+        return data;
+    }
+
+    public static void LoadAllData(WorldStateSaveData data)
+    {
+        if (data == null)
+            return;
+
+        // Limpa dados existentes
+        ClearAll();
+
+        // Carrega flags
+        foreach (var flagData in data.flags)
+        {
+            if (!string.IsNullOrEmpty(flagData.flagId))
+            {
+                worldFlags[flagData.flagId] = true;
+            }
+        }
+
+        // Carrega stages
+        foreach (var stageData in data.stages)
+        {
+            if (!string.IsNullOrEmpty(stageData.stageId))
+            {
+                stages[stageData.stageId] = stageData.value;
+            }
+        }
+
+        // Carrega conversas completadas
+        foreach (var conversationId in data.conversationsCompleted)
+        {
+            if (!string.IsNullOrEmpty(conversationId))
+            {
+                conversationComplete.Add(conversationId);
+            }
+        }
+        
+        WorldStateLoaded?.Invoke();
+    }
+    #endregion
+    
 }

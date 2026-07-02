@@ -20,6 +20,12 @@ public class GameSaveController : MonoBehaviour
         InventoryService.ItemRemoved += HandleStateChanged;
         QuestService.QuestStarted += HandleStateChanged;
         QuestService.QuestCompleted += HandleStateChanged;
+
+        WorldStateService.FlagSet += HandleWorldStateChanged;
+        WorldStateService.FlagCleared += HandleWorldStateChanged;
+        WorldStateService.StageSet += HandleWorldStateChanged;
+        WorldStateService.StageRemoved += HandleWorldStateChanged;
+        WorldStateService.ConversationMarkedComplete += HandleWorldStateChanged;
     }
 
     private void OnDisable()
@@ -28,6 +34,22 @@ public class GameSaveController : MonoBehaviour
         InventoryService.ItemRemoved -= HandleStateChanged;
         QuestService.QuestStarted -= HandleStateChanged;
         QuestService.QuestCompleted -= HandleStateChanged;
+
+        WorldStateService.FlagSet -= HandleWorldStateChanged;
+        WorldStateService.FlagCleared -= HandleWorldStateChanged;
+        WorldStateService.StageSet -= HandleWorldStateChanged;
+        WorldStateService.StageRemoved -= HandleWorldStateChanged;
+        WorldStateService.ConversationMarkedComplete -= HandleWorldStateChanged;
+    }
+
+    private void HandleWorldStateChanged(string flagId)
+    {
+        SaveGame();
+    }
+
+    private void HandleWorldStateChanged(string stageId, int value)
+    {
+        SaveGame();
     }
 
     private void HandleStateChanged(string id, int amount)
@@ -49,7 +71,7 @@ public class GameSaveController : MonoBehaviour
         {
             if (!string.IsNullOrEmpty(item.itemId) && item.amount > 0)
             {
-                InventoryService.TryAddItem(item.itemId, item.amount);
+                InventoryService.TryLoadItem(item.itemId, item.amount);
             }
         }
 
@@ -61,12 +83,11 @@ public class GameSaveController : MonoBehaviour
 
             if (quest.status == (int)QuestStatus.Active)
             {
-                QuestService.StartQuest(quest.questId);
+                QuestService.SetQuest(quest.questId, QuestStatus.Active);
             }
             else if (quest.status == (int)QuestStatus.Completed)
             {
-                QuestService.StartQuest(quest.questId);
-                QuestService.CompleteQuest(quest.questId);
+                QuestService.SetQuest(quest.questId, QuestStatus.Completed);
             }
         }
 
@@ -74,6 +95,12 @@ public class GameSaveController : MonoBehaviour
         {
             playerTransform.position = save.player.position;
         }
+
+        WorldStateService.LoadAllData(save.worldState);
+
+        // Notifica que os dados foram carregados (para UI se atualizar)
+        InventoryService.NotifyInventoryLoaded();
+        QuestService.NotifyQuestsLoaded();
     }
 
     private void SaveGame()
@@ -103,6 +130,7 @@ public class GameSaveController : MonoBehaviour
             data.player.position = playerTransform.position;
         }
 
+        data.worldState = WorldStateService.GetAllData();
         SaveManager.Save(data);
     }
 }

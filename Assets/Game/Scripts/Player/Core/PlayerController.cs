@@ -8,7 +8,7 @@ using UnityEngine.InputSystem;
 /// </summary>
 public class PlayerController : MonoBehaviour
 {
-    private PlayerAnimator playerAnimator;
+    private PlayerAnimator playerAnimator;    
     
     /// <summary>Referência da ação de movimento (esquerda/cima/direita/baixo).</summary>
     [SerializeField] private InputActionReference moveActionReference;

@@ -9,14 +9,8 @@ public class PlayerMovement : MonoBehaviour
 {
     private PlayerInputReader playerInputReader;
     private Rigidbody2D rb2D;
+    private PlayerSettings playerSettings;
     private bool canMove;
-
-    /// <summary>Velocidade de movimento padrão em unidades por segundo.</summary>
-    private const float DEFAULT_SPEED = 3f;
-
-    /// <summary>Velocidade de movimento, configurável no Inspector. Intervalo: 0-10 u/s.</summary>
-    [Range(0f, 10f)]
-    [SerializeField] private float speed = DEFAULT_SPEED;
 
     /// <summary>Indica se o jogador pode se mover atualmente.</summary>
     public bool CanMove => canMove;
@@ -30,8 +24,8 @@ public class PlayerMovement : MonoBehaviour
         }
     }
 
-    /// <summary>Inicializa o componente de movimento com o leitor de input.</summary>
-    public void Initialize(PlayerInputReader reader)
+    /// <summary>Inicializa o componente de movimento com o leitor de input e configurações.</summary>
+    public void Initialize(PlayerInputReader reader, PlayerSettings settings)
     {
         if (reader == null)
         {
@@ -39,8 +33,15 @@ public class PlayerMovement : MonoBehaviour
             return;
         }
 
+        if (settings == null)
+        {
+            Debug.LogError("[PlayerMovement] PlayerSettings cannot be null.", this);
+            return;
+        }
+
         playerInputReader = reader;
-        Debug.Log($"[PlayerMovement] Initialized with speed={speed} u/s", this);
+        playerSettings = settings;
+        Debug.Log($"[PlayerMovement] Initialized with speed={playerSettings.moveSpeed} u/s", this);
     }
 
     private void OnEnable()
@@ -72,11 +73,11 @@ public class PlayerMovement : MonoBehaviour
     /// <summary>Aplica a velocidade ao Rigidbody2D baseado no input normalizado.</summary>
     private void MovePlayer()
     {
-        if (rb2D == null || playerInputReader == null)
+        if (rb2D == null || playerInputReader == null || playerSettings == null)
             return;
 
         Vector2 moveDirection = playerInputReader.MoveDirection.normalized;
-        rb2D.linearVelocity = moveDirection * speed;
+        rb2D.linearVelocity = moveDirection * playerSettings.moveSpeed;
     }
 
     private void FixedUpdate()

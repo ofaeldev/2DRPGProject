@@ -23,15 +23,22 @@ public class InventoryPanelUI : MonoBehaviour
     {
         InventoryService.ItemAdded += OnItemChanged;
         InventoryService.ItemRemoved += OnItemChanged;
+        InventoryService.InventoryLoaded += OnInventoryLoaded;
     }
 
     private void OnDisable()
     {
         InventoryService.ItemAdded -= OnItemChanged;
         InventoryService.ItemRemoved -= OnItemChanged;
+        InventoryService.InventoryLoaded -= OnInventoryLoaded;
     }
 
     private void OnItemChanged(string itemId, int amount)
+    {
+        RefreshInventory();
+    }
+
+    private void OnInventoryLoaded()
     {
         RefreshInventory();
     }

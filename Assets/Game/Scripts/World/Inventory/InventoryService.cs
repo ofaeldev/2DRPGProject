@@ -5,20 +5,11 @@ public static class InventoryService
 {
     public static event Action<string, int> ItemAdded;
     public static event Action<string, int> ItemRemoved;
+    public static event Action InventoryLoaded; // Evento quando inventário é carregado
     private static readonly Dictionary<string, int> inventoryItems = new Dictionary<string, int>();
-    private static bool hasLoadedFromDisk;
-
-    private static void EnsureLoaded()
-    {
-        if (hasLoadedFromDisk)
-            return;
-
-        LoadFromDisk();
-    }
-
+    
     public static void AddItem(string itemId, int amount)
     {
-        EnsureLoaded();
         TryAddItem(itemId, amount);
     }
 
@@ -47,8 +38,6 @@ public static class InventoryService
 
     public static bool TryRemoveItem(string itemId, int amount)
     {
-        EnsureLoaded();
-
         if (string.IsNullOrEmpty(itemId) || amount <= 0)
             return false;
 
@@ -75,14 +64,11 @@ public static class InventoryService
 
     public static bool HasItem(string itemId)
     {
-        EnsureLoaded();
         return !string.IsNullOrEmpty(itemId) && inventoryItems.ContainsKey(itemId);
     }
 
     public static int GetItemAmount(string itemId)
     {
-        EnsureLoaded();
-
         if (string.IsNullOrEmpty(itemId))
             return 0;
 
@@ -94,7 +80,6 @@ public static class InventoryService
 
     public static IReadOnlyDictionary<string, int> GetAllItems()
     {
-        EnsureLoaded();
         return new Dictionary<string, int>(inventoryItems);
     }
 
@@ -103,22 +88,32 @@ public static class InventoryService
         inventoryItems.Clear();
     }
 
-    public static void SaveToDisk()
+    /// <summary>
+    /// Adiciona um item diretamente ao inventário, sem disparar eventos.
+    /// Usado durante o carregamento do save.
+    /// </summary>
+    public static bool TryLoadItem(string itemId, int amount)
     {
-        EnsureLoaded();
-        InventoryPersistence.Save(inventoryItems);
-    }
+        if (string.IsNullOrEmpty(itemId) || amount <= 0)
+            return false;
 
-    public static void LoadFromDisk()
-    {
-        var loadedInventory = InventoryPersistence.Load();
-        inventoryItems.Clear();
-
-        foreach (var pair in loadedInventory)
+        if (inventoryItems.ContainsKey(itemId))
         {
-            inventoryItems[pair.Key] = pair.Value;
+            inventoryItems[itemId] += amount;
+        }
+        else
+        {
+            inventoryItems[itemId] = amount;
         }
 
-        hasLoadedFromDisk = true;
+        return true;
+    }
+
+    /// <summary>
+    /// Notifica que o inventário foi completamente carregado.
+    /// </summary>
+    public static void NotifyInventoryLoaded()
+    {
+        InventoryLoaded?.Invoke();
     }
 }

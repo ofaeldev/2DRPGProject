@@ -6,17 +6,29 @@ using UnityEngine;
 /// </summary>
 public class PlayerInteraction : PlayerInputSubscriber
 {
-    [SerializeField] private float interactionDistance;
-    [SerializeField] private float interactionRadius;
     [SerializeField] private LayerMask interactableLayer;
+    private PlayerSettings playerSettings;
     private IInteraction currentInteraction;
     private PlayerInteractionResolver interactionResolver;
 
-    public override void Initialize(PlayerInputReader reader)
+    public override void Initialize(PlayerInputReader reader, PlayerSettings settings)
     {
         base.Initialize(reader);
-        interactionResolver = new PlayerInteractionResolver(transform, interactableLayer, interactionDistance, interactionRadius, reader);
-        Debug.Log($"[PlayerInteraction] Initialized with distance={interactionDistance}, radius={interactionRadius}", this);
+
+        if (settings == null)
+        {
+            Debug.LogError("[PlayerInteraction] PlayerSettings cannot be null.", this);
+            return;
+        }
+
+        playerSettings = settings;
+        interactionResolver = new PlayerInteractionResolver(
+            transform,
+            interactableLayer,
+            playerSettings.interactionDistance,
+            playerSettings.interactionRadius,
+            reader);
+        Debug.Log($"[PlayerInteraction] Initialized with distance={playerSettings.interactionDistance}, radius={playerSettings.interactionRadius}", this);
     }
 
     protected override void OnEnable()
@@ -101,13 +113,13 @@ public class PlayerInteraction : PlayerInputSubscriber
     /// <summary>Desenha Gizmos para visualizar a área de detecção de interação.</summary>
     private void OnDrawGizmos()
     {
-        if (interactionResolver == null)
+        if (interactionResolver == null || playerSettings == null)
             return;
 
         Gizmos.color = Color.yellow;
 
         Vector2 interactionPoint = interactionResolver.GetPoint();
-        Gizmos.DrawWireSphere(interactionPoint, interactionRadius);
+        Gizmos.DrawWireSphere(interactionPoint, playerSettings.interactionRadius);
         Gizmos.DrawLine(transform.position, interactionPoint);
     }
 }

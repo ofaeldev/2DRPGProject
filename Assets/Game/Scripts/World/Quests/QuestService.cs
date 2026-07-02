@@ -5,6 +5,7 @@ public static class QuestService
 {
     public static event Action<string> QuestStarted;
     public static event Action<string> QuestCompleted;
+    public static event Action QuestsLoaded; // Evento quando quests são carregadas
 
     private static Dictionary<string, QuestStatus> quests = new Dictionary<string, QuestStatus>();
     public static void StartQuest(string questId)
@@ -73,5 +74,21 @@ public static class QuestService
             return status;
 
         return QuestStatus.NotStarted;
+    }
+
+    public static void SetQuest(string questId, QuestStatus status)
+    {
+        if (!IsValidQuestId(questId))
+            return;
+
+        quests[questId] = status;
+    }
+
+    /// <summary>
+    /// Notifica que as quests foram completamente carregadas.
+    /// </summary>
+    public static void NotifyQuestsLoaded()
+    {
+        QuestsLoaded?.Invoke();
     }
 }

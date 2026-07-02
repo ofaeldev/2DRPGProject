@@ -11,12 +11,22 @@ using UnityEngine;
 [RequireComponent(typeof(PlayerInventory))]
 public class PlayerSetup : MonoBehaviour
 {
+    [Header("Configurações")]
+    [Tooltip("Scriptable Object com as configurações do jogador")]
+    [SerializeField] private PlayerSettings playerSettings;
+
     private PlayerController playerController;
     private PlayerInputReader inputReader;
 
     private void Awake()
     {
         Debug.Log("[PlayerSetup] Starting player initialization...", this);
+
+        if (playerSettings == null)
+        {
+            Debug.LogError("[PlayerSetup] PlayerSettings não foi atribuído no Inspector! Inicialização cancelada.", this);
+            return;
+        }
 
         playerController = GetComponent<PlayerController>();
         if (playerController == null)
@@ -55,9 +65,9 @@ public class PlayerSetup : MonoBehaviour
             playerController.InteractionActionReference,
             playerController.InventoryActionReference);
 
-        // Inicializa cada subsistema
-        movement.Initialize(inputReader);
-        interaction.Initialize(inputReader);
+        // Inicializa cada subsistema com as configurações
+        movement.Initialize(inputReader, playerSettings);
+        interaction.Initialize(inputReader, playerSettings);
         inventory.Initialize(inputReader);
         playerController.Initialize(inputReader);
         playerAnimator.Initialize(animator, movement, inputReader);
