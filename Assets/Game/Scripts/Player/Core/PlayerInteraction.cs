@@ -1,131 +1,85 @@
 using UnityEngine;
 
-public class PlayerInteraction : MonoBehaviour
+/// <summary>
+/// Gerencia detecção e execução de interações com objetos do mundo.
+/// Detecta alvo de interação próximo ao jogador e executa ações ao pressionar a tecla.
+/// </summary>
+public class PlayerInteraction : PlayerInputSubscriber
 {
-    private PlayerInputReader playerInputReader;
     [SerializeField] private float interactionDistance;
     [SerializeField] private float interactionRadius;
     [SerializeField] private LayerMask interactableLayer;
     private IInteraction currentInteraction;
-    private bool isConnected;
+    private PlayerInteractionResolver interactionResolver;
 
-    private void OnEnable()
+    public override void Initialize(PlayerInputReader reader)
     {
-        Connect();
+        base.Initialize(reader);
+        interactionResolver = new PlayerInteractionResolver(transform, interactableLayer, interactionDistance, interactionRadius, reader);
+        Debug.Log($"[PlayerInteraction] Initialized with distance={interactionDistance}, radius={interactionRadius}", this);
+    }
+
+    protected override void OnEnable()
+    {
+        base.OnEnable();
         GameplayStateService.StateChanged += OnStateChange;
     }
 
-    private void OnDisable()
+    protected override void OnDisable()
     {
-        Disconnect();
+        base.OnDisable();
         GameplayStateService.StateChanged -= OnStateChange;
     }
 
+    /// <summary>Reage a mudanças no estado do gameplay (locked/unlocked).</summary>
     private void OnStateChange()
     {
         if (!GameplayStateService.CanInteract)
         {
             currentInteraction = null;
-            PopUpService.EndedPopUp();            
-        }
-    }
-
-    public void Initialize(PlayerInputReader reader)
-    {
-        playerInputReader = reader;
-
-        if(isActiveAndEnabled)
-        {
-            Connect();
+            PopUpService.EndedPopUp();
         }
     }
 
     private void Update()
     {
-        if(GameplayStateService.CanInteract)
+        if (GameplayStateService.CanInteract)
             UpdateCurrentInteraction();
     }
 
-
-    private void Connect()
+    /// <summary>Conecta ao evento InteractionRequested do input reader.</summary>
+    protected override void ConnectToInputEvents()
     {
-        if(isConnected)
-        return;
-
-        if(playerInputReader == null)
-        return;
-        
         playerInputReader.InteractionRequested += OnInteraction;
-        
-        isConnected = true;
     }
 
-    private void Disconnect()
+    /// <summary>Desconecta do evento InteractionRequested do input reader.</summary>
+    protected override void DisconnectFromInputEvents()
     {
-        if(!isConnected)
-        return;
-
         playerInputReader.InteractionRequested -= OnInteraction;
-
-        isConnected = false;
     }
+    /// <summary>Atualiza o alvo de interação atual baseado na detecção.</summary>
     private void UpdateCurrentInteraction()
     {
-        IInteraction detectedInteraction = DetectTarget();
+        IInteraction detectedInteraction = interactionResolver != null ? interactionResolver.DetectTarget() : null;
         
-        if(currentInteraction == detectedInteraction)
+        if (currentInteraction == detectedInteraction)
             return;
 
         currentInteraction = detectedInteraction;        
         
-        if(currentInteraction != null)
+        if (currentInteraction != null)
         {
             PopUpService.StartedPopUp(currentInteraction);
+            Debug.Log($"[PlayerInteraction] Detected interactable: {currentInteraction}", this);
         }
         else
         {
             PopUpService.EndedPopUp();
         }
     }
-    private IInteraction DetectTarget()
-    {
-        Vector2 interactionPoint = GetPoint();
 
-        Collider2D[] colliders = Physics2D.OverlapCircleAll(
-            interactionPoint,
-            interactionRadius,
-            interactableLayer
-            );
-
-        IInteraction closestInteraction = null;
-        float closestDistance = Mathf.Infinity;
-
-        for(int i = 0; i < colliders.Length; i++)
-        {
-            Collider2D candidateCollider = colliders[i];
-
-            if(!candidateCollider.TryGetComponent(out IInteraction candidateInteraction))
-            {
-                continue;
-            }
-
-            Vector2 candidateInteractionCollider = candidateCollider.ClosestPoint(interactionPoint);
-
-            float candidateDistance = Vector2.Distance(
-            interactionPoint,
-            candidateInteractionCollider
-            );
-
-            if(candidateDistance < closestDistance)
-            {
-                closestDistance = candidateDistance;
-                closestInteraction = candidateInteraction;
-            }
-        }
-
-        return closestInteraction;
-    }
-
+    /// <summary>Executa a interação atual ou avança diálogo se disponível.</summary>
     private void OnInteraction()
     {
         if (GameplayStateService.CanAdvanceDialogue)
@@ -134,37 +88,26 @@ public class PlayerInteraction : MonoBehaviour
             return;
         }
 
-        if(!GameplayStateService.CanInteract)
+        if (!GameplayStateService.CanInteract)
             return;
-            
-        currentInteraction?.Execute();
-    }
-
-    private Vector2 GetPoint()
-    {
-        Vector2 lookDirection;
         
-        if(playerInputReader == null || playerInputReader.LastMoveDirection == Vector2.zero)
-        {            
-            lookDirection = Vector2.down;
-        }
-        else
+        if (currentInteraction != null)
         {
-            lookDirection = playerInputReader.LastMoveDirection;            
+            Debug.Log($"[PlayerInteraction] Executing: {currentInteraction}", this);
+            currentInteraction.Execute();
         }
-
-        Vector2 playerPosition = transform.position;
-
-        Vector2 normalizedLookDirection = lookDirection.normalized;
-        Vector2 interactionPoint = playerPosition + normalizedLookDirection * interactionDistance;
-        return interactionPoint;
     }
 
+    /// <summary>Desenha Gizmos para visualizar a área de detecção de interação.</summary>
     private void OnDrawGizmos()
     {
+        if (interactionResolver == null)
+            return;
+
         Gizmos.color = Color.yellow;
 
-        Gizmos.DrawWireSphere(GetPoint(), interactionRadius);
-        Gizmos.DrawLine(transform.position, GetPoint());
+        Vector2 interactionPoint = interactionResolver.GetPoint();
+        Gizmos.DrawWireSphere(interactionPoint, interactionRadius);
+        Gizmos.DrawLine(transform.position, interactionPoint);
     }
 }

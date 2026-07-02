@@ -10,10 +10,10 @@ public class PlayerInputReader
 
     public void SetMove(Vector2 direction)
     {
-        MoveDirection = direction;
+        MoveDirection = direction.normalized;
         
         if(direction.sqrMagnitude != 0)
-            LastMoveDirection = direction;
+            LastMoveDirection = direction.normalized;
     }
 
     public void RequestInteraction()

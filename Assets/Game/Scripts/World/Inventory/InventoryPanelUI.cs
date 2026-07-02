@@ -7,9 +7,16 @@ public class InventoryPanelUI : MonoBehaviour
     [SerializeField] private Transform itemContainer;
     [SerializeField] private InventoryDatabase inventoryDatabase;
 
+    private readonly InventoryViewModel inventoryViewModel = new InventoryViewModel();
+
     private void Awake()
     {
         HideInventory();
+    }
+
+    private void Start()
+    {
+        RefreshInventory();
     }
 
     private void OnEnable()
@@ -42,31 +49,14 @@ public class InventoryPanelUI : MonoBehaviour
             Destroy(itemContainer.GetChild(i).gameObject);
         }
 
-        if (inventoryDatabase == null)
-        {
-            Debug.LogWarning("Inventory panel is missing an inventory database.");
-            return;
-        }
-
         if (itemPrefab == null)
         {
             Debug.LogWarning("Inventory panel is missing an item prefab.");
             return;
         }
 
-        foreach (var item in InventoryService.GetAllItems())
+        foreach (var entry in inventoryViewModel.BuildEntries(inventoryDatabase))
         {
-            string itemId = item.Key;
-            int amount = item.Value;
-
-            ItemDefinition definition = inventoryDatabase.GetItemById(itemId);
-
-            if (definition == null)
-            {
-                Debug.LogWarning($"Inventory item '{itemId}' has no definition in the database.");
-                continue;
-            }
-
             GameObject itemObject = Instantiate(itemPrefab, itemContainer);
             InventoryItemUI itemUI = itemObject.GetComponent<InventoryItemUI>();
 
@@ -77,7 +67,7 @@ public class InventoryPanelUI : MonoBehaviour
                 continue;
             }
 
-            itemUI.SetItem(definition.displayName, amount);
+            itemUI.SetItem(entry.DisplayName, entry.Amount);
         }
     }
 

@@ -6,14 +6,15 @@ public class QuestController : MonoBehaviour
     [SerializeField] private string debugQuestId = "help_south_gate";
     [SerializeField] private bool logInitialStatus = true;
     [SerializeField] private QuestDefinition[] questDefinition;
-    private QuestPanelUI questPanelUI;    
+    private QuestPanelUI questPanelUI;
     private QuestDatabase questDatabase;
+    private QuestViewModel questViewModel;
 
     private void Awake()
     {
         questPanelUI = GetComponent<QuestPanelUI>();
-
         questDatabase = new QuestDatabase(questDefinition);
+        questViewModel = new QuestViewModel(questDatabase);
     }
     private void OnEnable()
     {
@@ -35,20 +36,18 @@ public class QuestController : MonoBehaviour
 
     private void OnQuestStarted(string questId)
     {
-        var currentTitle = questDatabase.GetQuestTitle(questId);
-        var currentStatus = QuestService.GetQuestStatus(questId);
+        QuestDisplayModel displayModel = questViewModel.BuildDisplayModel(questId);
 
-        Debug.Log($"Quest started: {currentTitle} | Status: {currentStatus}");
-        questPanelUI.ShowQuestStarted(currentTitle, currentStatus.ToString());
+        Debug.Log($"Quest started: {displayModel.Title} | Status: {displayModel.Status}");
+        questPanelUI.ShowQuestStarted(displayModel.Title, displayModel.Status);
     }
 
     private void OnQuestCompleted(string questId)
     {
-        var currentTitle = questDatabase.GetQuestTitle(questId);
-        var currentStatus = QuestService.GetQuestStatus(questId);
+        QuestDisplayModel displayModel = questViewModel.BuildDisplayModel(questId);
 
-        Debug.Log($"Quest completed: {currentTitle} | Status: {currentStatus}");
-        questPanelUI.ShowQuestCompleted(currentTitle, currentStatus.ToString());
+        Debug.Log($"Quest completed: {displayModel.Title} | Status: {displayModel.Status}");
+        questPanelUI.ShowQuestCompleted(displayModel.Title, displayModel.Status);
     }
 
     [ContextMenu("Debug/Start Quest")]

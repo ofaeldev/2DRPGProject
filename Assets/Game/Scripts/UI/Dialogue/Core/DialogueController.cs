@@ -1,21 +1,20 @@
-using System.Collections.Generic;
 using UnityEngine;
 
 public class DialogueController : MonoBehaviour
 {
     private DialoguePanelUI dialoguePanelUI;
+    private DialogueFlowController dialogueFlowController;
     private string currentNpcName;
     private DialogueNode[] currentNodes;
     private DialogueNode currentNode;
     private bool isDialogueActive;
     private string currentConversationId;
 
-    private Dictionary<string, DialogueNode> validateId = new Dictionary<string, DialogueNode>();
-
     #region Unity Methods
     private void Awake()
     {
         dialoguePanelUI = GetComponent<DialoguePanelUI>();
+        dialogueFlowController = new DialogueFlowController();
         dialoguePanelUI.HideDialogue();
     }
 
@@ -50,34 +49,14 @@ public class DialogueController : MonoBehaviour
         if (dialogueLines == null || dialogueLines.Length == 0)
             return;
 
-        validateId.Clear();
-
         currentNodes = dialogueLines;
-
-        for (int i = 0; i < currentNodes.Length; i++)
-        {
-            string id = currentNodes[i].id;
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                Debug.LogWarning($"Empty node id at index {i} for npc {npcName}");
-                continue;
-            }
-
-            if (validateId.ContainsKey(id))
-            {
-                Debug.LogWarning($"Duplicate node id {id} in dialogue for npc {npcName}");
-            }
-            else
-            {
-                validateId[id] = currentNodes[i];
-            }
-        }
+        dialogueFlowController.BuildNodeMap(currentNodes, npcName);
 
         currentNpcName = npcName;
         currentConversationId = conversationId;
 
         // choose start node
-        if (!string.IsNullOrWhiteSpace(startNodeId) && validateId.TryGetValue(startNodeId, out DialogueNode startNode))
+        if (!string.IsNullOrWhiteSpace(startNodeId) && dialogueFlowController.FindNodeById(startNodeId) is DialogueNode startNode)
         {
             currentNode = startNode;
         }
@@ -113,7 +92,7 @@ public class DialogueController : MonoBehaviour
             return;
         }
 
-        DialogueNode nextNode = FindNodeById(currentNode.nextId);
+        DialogueNode nextNode = dialogueFlowController.FindNodeById(currentNode.nextId);
 
         if (nextNode != null)
         {
@@ -133,7 +112,7 @@ public class DialogueController : MonoBehaviour
 
         dialoguePanelUI.HideDialogue();
         isDialogueActive = false;
-        validateId.Clear();
+        dialogueFlowController.Clear();
 
         if (!string.IsNullOrWhiteSpace(currentConversationId))
         {
@@ -143,17 +122,6 @@ public class DialogueController : MonoBehaviour
     }
 
     #region Helpers
-    private DialogueNode FindNodeById(string id)
-    {
-        if (string.IsNullOrWhiteSpace(id))
-            return null;
-
-        if (validateId.TryGetValue(id, out DialogueNode node))
-            return node;
-
-        return null;
-    }
-
     public void ChooseOption(int optionIndex)
     {
         if (currentNode == null)
@@ -185,7 +153,7 @@ public class DialogueController : MonoBehaviour
             return;
         }
 
-        DialogueNode nextNode = FindNodeById(choose.nextId);
+        DialogueNode nextNode = dialogueFlowController.FindNodeById(choose.nextId);
 
         if (nextNode != null)
         {
@@ -199,43 +167,9 @@ public class DialogueController : MonoBehaviour
         }
     }
 
-    private bool HasNodes(DialogueNode[] nodes)
-    {
-        return nodes != null && nodes.Length > 0;
-    }
-
     private DialogueNode[] ChooseNodes(DialogueSession session)
     {
-        if(session == null)
-            return null;
-        
-        DialogueNode[] nodesToUse = session.firstTimeNodes;
-
-        if(session.worldStateBranches == null)
-            return nodesToUse;
-
-        for (int i = 0; i < session.worldStateBranches.Length; i++)
-        {
-            
-            DialogueBranch branch = session.worldStateBranches[i];
-
-            if(branch == null)
-                continue;
-            
-            if(string.IsNullOrEmpty(branch.requiredFlag))
-                continue;
-            
-            if(!HasNodes(branch.nodes))
-                continue;
-            
-            if(!WorldStateService.HasFlag(branch.requiredFlag))
-                continue;
-                
-            nodesToUse = branch.nodes;
-            break;
-        }
-
-        return nodesToUse;
+        return dialogueFlowController.BuildNodeSet(session);
     }
 #endregion
 }

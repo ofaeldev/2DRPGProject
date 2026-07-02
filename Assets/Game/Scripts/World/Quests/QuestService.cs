@@ -53,6 +53,12 @@ public static class QuestService
     {
         return GetQuestStatus(questId) == QuestStatus.Completed;
     }
+
+    public static Dictionary<string, QuestStatus> GetAllQuestStates()
+    {
+        return new Dictionary<string, QuestStatus>(quests);
+    }
+
     private static bool IsValidQuestId(string questId)
     {
         return !string.IsNullOrWhiteSpace(questId);

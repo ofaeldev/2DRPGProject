@@ -1,71 +1,35 @@
 using UnityEngine;
 
-public class PlayerInventory : MonoBehaviour
+/// <summary>
+/// Gerencia a abertura/fechamento do inventário do jogador.
+/// Conecta ao evento InventoryRequested do PlayerInputReader e delega para PlayerInventoryController.
+/// </summary>
+public class PlayerInventory : PlayerInputSubscriber
 {
-    [SerializeField] private InventoryPanelUI inventoryPanelUI;
-    private PlayerInputReader playerInputReader;
-    private bool isConnected;
-    private bool isInventoryOpen;
+    [SerializeField] private PlayerInventoryController inventoryController;
 
-    public void Initialize(PlayerInputReader playerInputReader)
+    /// <summary>Conecta ao evento InventoryRequested do input reader.</summary>
+    protected override void ConnectToInputEvents()
     {
-        this.playerInputReader = playerInputReader;
-
-        if (isActiveAndEnabled)
-        {
-            Connect();
-        }
-    }
-
-    private void OnEnable()
-    {
-        Connect();
-    }
-
-    private void OnDisable()
-    {
-        Disconnect();
-    }
-
-    private void Connect()
-    {
-        if (isConnected)
-            return;
-
-        if (playerInputReader == null)
-            return;
-
         playerInputReader.InventoryRequested += OnInventory;
-        isConnected = true;
     }
 
-    private void Disconnect()
+    /// <summary>Desconecta do evento InventoryRequested do input reader.</summary>
+    protected override void DisconnectFromInputEvents()
     {
-        if (!isConnected)
-            return;
-
         playerInputReader.InventoryRequested -= OnInventory;
-        isConnected = false;
     }
 
+    /// <summary>Alterna o estado do inventário (aberto/fechado).</summary>
     private void OnInventory()
     {
-        isInventoryOpen = !isInventoryOpen;
-
-        if (inventoryPanelUI == null)
+        if (inventoryController == null)
         {
-            Debug.LogWarning("PlayerInventory is missing an InventoryPanelUI reference.");
+            Debug.LogError("[PlayerInventory] Missing PlayerInventoryController reference. Cannot toggle inventory.", this);
             return;
         }
 
-        if (isInventoryOpen)
-        {
-            inventoryPanelUI.ShowInventory();
-            GameplayStateService.Lock(GameplayLockReason.Inventory);
-            return;
-        }
-
-        inventoryPanelUI.HideInventory();
-        GameplayStateService.Unlock(GameplayLockReason.Inventory);
+        inventoryController.ToggleInventory();
+        Debug.Log("[PlayerInventory] Inventory toggled", this);
     }
 }
